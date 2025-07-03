@@ -28,7 +28,10 @@ services:
     restart: always
     environment:
     - HOST_PROC=/host/proc
-    privileged: true
+    # Removed privileged: true for security - use specific capabilities instead
+    cap_add:
+      - SYS_PTRACE
+      - DAC_READ_SEARCH
   #  mem_limit: 384m
     ports:
       # Expose Statsd UDP server to local host

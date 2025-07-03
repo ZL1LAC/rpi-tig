@@ -13,8 +13,8 @@ if [ $(grep -c "TOKEN_TO_CHANGE" env.influxdb) -ne 0 ]; then
    else
       PASSWORD=$(openssl rand -hex 32)
    fi
-   sed -i .orig "s/TOKEN_TO_CHANGE/$PASSWORD/g" env.influxdb
-   sed -i .orig "s/TOKEN_TO_CHANGE/$PASSWORD/g" telegraf/telegraf.conf
+   sed -i "s/TOKEN_TO_CHANGE/$PASSWORD/g" env.influxdb
+   sed -i "s/TOKEN_TO_CHANGE/$PASSWORD/g" telegraf/telegraf.conf
    echo "Warning: this is not enough to consider this installation is secure"
    echo "         do NOT expose this to the Internet directly!"
 fi
@@ -29,7 +29,7 @@ if [ $(grep -c "ADMIN_TO_CHANGE" env.influxdb) -ne 0 ]; then
    else
       PASSWORD=$(openssl rand -hex 32)
    fi
-   sed -i .orig "s/ADMIN_TO_CHANGE/$PASSWORD/g" env.influxdb
+   sed -i "s/ADMIN_TO_CHANGE/$PASSWORD/g" env.influxdb
    echo "... done"
    echo "Warning: again, the password is in the env.influxdb file now, be careful."
 fi
@@ -42,7 +42,9 @@ docker-compose up -d
 
 echo -n "Waiting for InfluxDB to come up..."
 sleep 20
-while ! $(docker exec -it influxdb influx -password $PASSWORD -username 'admin' -execute 'show databases' | grep -q telegraf); do
+# Extract the current admin password from the environment file
+ADMIN_PASSWORD="$(grep DOCKER_INFLUXDB_INIT_PASSWORD env.influxdb | awk -F '=' '{print $2}')"
+while ! $(docker exec -it influxdb influx -password "$ADMIN_PASSWORD" -username 'monitor' -execute 'show databases' | grep -q telegraf); do
   echo -n "."
 done
 echo " ready"
