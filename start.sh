@@ -78,7 +78,19 @@ if grep -q "ADMIN_TO_CHANGE" env.influxdb; then
 fi
 
 echo "Changing ownership of grafana files to what the Docker image expects"
-#sudo chown -R 472:472 grafana/data
+# Ensure data directories exist
+mkdir -p grafana/data grafana/provisioning influxdb/data influxdb/config
+
+# Attempt to set expected ownership for Grafana data (UID/GID 472)
+if command -v sudo >/dev/null 2>&1; then
+  sudo chown -R 472:472 grafana/data || true
+elif [ "$(id -u)" -eq 0 ]; then
+  chown -R 472:472 grafana/data || true
+else
+  echo "Note: Could not change grafana/data ownership automatically (no sudo)." >&2
+  echo "      If Grafana fails to write to its data dir, run:" >&2
+  echo "        sudo chown -R 472:472 grafana/data" >&2
+fi
 
 echo "Starting TIG stack in the background"
 set +e
@@ -89,12 +101,32 @@ set -e
 # Detect common Docker manifest issues (e.g., wrong image tag or arch) and provide guidance
 if [ $compose_exit -ne 0 ]; then
   echo "Error: Failed to start containers. Checking for manifest issues..." >&2
+  # If docker is not present, we cannot probe manifests
+  if ! command -v docker >/dev/null 2>&1; then
+    echo "Docker CLI not found; cannot probe image manifests. Please ensure Docker is installed." >&2
+    exit $compose_exit
+  fi
+
+  if docker pull telegraf:${TELEGRAF_TAG:-1.30} 2>&1 | grep -qi "manifest unknown"; then
+    echo "Detected unknown Telegraf image tag or unsupported architecture." >&2
+    echo "Try setting a specific tag known to exist on your platform, e.g.:" >&2
+    echo "  export TELEGRAF_TAG=1.30" >&2
+    echo "  ./start.sh" >&2
+    echo "You can list available tags at: https://hub.docker.com/_/telegraf/tags" >&2
+  fi
+
   if docker pull grafana/grafana:${GRAFANA_TAG:-11.3.0} 2>&1 | grep -qi "manifest unknown"; then
     echo "Detected unknown Grafana image tag or unsupported architecture." >&2
     echo "Try setting a specific tag known to exist on your platform, e.g.:" >&2
     echo "  export GRAFANA_TAG=11.3.0" >&2
     echo "  ./start.sh" >&2
     echo "You can list available tags at: https://hub.docker.com/r/grafana/grafana/tags" >&2
+  fi
+  if docker pull influxdb:2 2>&1 | grep -qi "manifest unknown"; then
+    echo "Detected unknown InfluxDB image tag or unsupported architecture." >&2
+    echo "Try setting a specific 2.x tag known to exist on your platform, e.g.:" >&2
+    echo "  docker pull influxdb:2.7" >&2
+    echo "Available tags: https://hub.docker.com/_/influxdb/tags" >&2
   fi
   exit $compose_exit
 fi
