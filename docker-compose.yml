@@ -26,6 +26,8 @@ services:
     hostname: telegraf
     container_name: telegraf
     restart: always
+    env_file:
+      - 'env.influxdb'
     environment:
     - HOST_PROC=/host/proc
     privileged: true

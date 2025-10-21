@@ -349,14 +349,15 @@
 ##   ex: urls = ["https://us-west-2-1.aws.cloud2.influxdata.com"]
 urls = ["http://influxdb:8086"]
 
-## Token for authentication.
-token = "TOKEN_TO_CHANGE"
+## Token for authentication. Pulled from env so Telegraf stays
+## in sync with InfluxDB setup performed via env.influxdb.
+token = "${DOCKER_INFLUXDB_INIT_ADMIN_TOKEN}"
 
 ## Organization is the name of the organization you wish to write to.
-organization = "rpi-tig"
+organization = "${DOCKER_INFLUXDB_INIT_ORG}"
 
 ## Destination bucket to write into.
-bucket = "telegraf"
+bucket = "${DOCKER_INFLUXDB_INIT_BUCKET}"
 
 ## The value of this tag will be used to determine the bucket.  If this
 ## tag is not set the 'bucket' option is used as the default.
