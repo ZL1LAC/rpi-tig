@@ -81,7 +81,23 @@ echo "Changing ownership of grafana files to what the Docker image expects"
 #sudo chown -R 472:472 grafana/data
 
 echo "Starting TIG stack in the background"
+set +e
 compose up -d
+compose_exit=$?
+set -e
+
+# Detect common Docker manifest issues (e.g., wrong image tag or arch) and provide guidance
+if [ $compose_exit -ne 0 ]; then
+  echo "Error: Failed to start containers. Checking for manifest issues..." >&2
+  if docker pull grafana/grafana:${GRAFANA_TAG:-11.3.0} 2>&1 | grep -qi "manifest unknown"; then
+    echo "Detected unknown Grafana image tag or unsupported architecture." >&2
+    echo "Try setting a specific tag known to exist on your platform, e.g.:" >&2
+    echo "  export GRAFANA_TAG=11.3.0" >&2
+    echo "  ./start.sh" >&2
+    echo "You can list available tags at: https://hub.docker.com/r/grafana/grafana/tags" >&2
+  fi
+  exit $compose_exit
+fi
 
 echo -n "Waiting for InfluxDB to come up..."
 # Give InfluxDB some time to initialize the setup; health endpoint will be available once ready

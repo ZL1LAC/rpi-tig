@@ -42,7 +42,7 @@ services:
       - /var/log:/host/var/log:ro
 
   grafana:
-    image: grafana/grafana:11
+    image: grafana/grafana:${GRAFANA_TAG:-11.3.0}
     hostname: grafana
     container_name: grafana
     restart: always
