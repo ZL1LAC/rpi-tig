@@ -32,6 +32,17 @@ if [ ! -f env.influxdb ]; then
   fi
 fi
 
+# Ensure the required telegraf config exists before proceeding
+if [ ! -f telegraf/telegraf.conf ]; then
+  if [ -f telegraf/telegraf.conf.default ]; then
+    echo "telegraf/telegraf.conf not found; creating from default template"
+    cp telegraf/telegraf.conf.default telegraf/telegraf.conf
+  else
+    echo "Error: telegraf/telegraf.conf not found and no telegraf/telegraf.conf.default template present." >&2
+    exit 1
+  fi
+fi
+
 # Step one: ensure we have Token that is defined everywhere it is needed:
 # - InfluxDB of course
 # - Telegraf so that it can write to Influx
@@ -39,7 +50,7 @@ fi
 if grep -q "TOKEN_TO_CHANGE" env.influxdb; then
    echo "Default token detected for Influx database..."
    echo "Setting up a random token for this installation"
-   if ! command -v openssl
+   if ! command -v openssl >/dev/null 2>&1
    then
       PASSWORD=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w30 | head -n1)
    else
@@ -55,7 +66,7 @@ fi
 if grep -q "ADMIN_TO_CHANGE" env.influxdb; then
    echo "Default password detected for InfluxDB administrator..."
    echo "Setting up a random password for this installation"
-   if ! command -v openssl
+   if ! command -v openssl >/dev/null 2>&1
    then
       PASSWORD=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w30 | head -n1)
    else
