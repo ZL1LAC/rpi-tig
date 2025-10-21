@@ -4,7 +4,8 @@ Dockerized Telegraf/InfluxDB/Grafana for Rpi
 I just wanted a fire-and-forget way to quickly monitor a new Pi, this is it. On a Raspbian Buster image, simply:
 
 ```
-apt-get install docker.io docker-compose
+apt-get install docker.io
+# If your distro does not ship the plugin, install docker-compose-plugin
 ```
 
 ... clone this repository, and do:
@@ -17,8 +18,8 @@ apt-get install docker.io docker-compose
 You should be set. After a couple of minutes (it's a Raspberry Pi after all), you will get the following:
 
 - A telegraf instance gathering system stats, with statsd available on the local host for external log input
-- InfluxDB storing the telegraf data
-- Grafana already configured to talk to the InfluxDB instance, and preconfigured with a default system dashboard
+- InfluxDB 2.x storing the telegraf data
+- Grafana 11.x already configured to talk to the InfluxDB instance, and preconfigured with a default system dashboard
 
 I made a moderate effort to at least randomize the Influx database password at first run, and Grafana will remind you to change the admin password. That said, if you put this in production as is, it's really on you. There are many things that should still be done before considering this secure in any way...
 
