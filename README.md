@@ -42,3 +42,12 @@ Look in the `utils` directory for the files you should install on your Pi to spa
 - Thanks to docker-compose/Docker, the stack will survive a reboot
 - Provisioned dashboards on Grafana cannot be saved, so they really should be used as templates, and saved as a new Dashboard if you want to edit/modify them
 - Feel free to contribute PRs with useful dashboards if you have some
+
+## Troubleshooting
+
+- **Telegraf "Unauthorized" every ~10s in InfluxDB logs**: Telegraf is writing without valid credentials. This repo wires Telegraf to the same env variables as InfluxDB and Grafana via `env.influxdb`.
+  - Ensure `env.influxdb` exists (created from `env.influxdb.default` by `start.sh`).
+  - `DOCKER_INFLUXDB_INIT_ORG`, `DOCKER_INFLUXDB_INIT_BUCKET`, and `DOCKER_INFLUXDB_INIT_ADMIN_TOKEN` are injected into the Telegraf container and referenced by `telegraf/telegraf.conf`.
+  - If you see `authorization not found`, run `./reset.sh` and then `./start.sh` to regenerate and propagate a valid token.
+
+- **Repeated `SHOW MEASUREMENTS` queries in logs**: These are read queries from clients (e.g., Grafana/CLI). Normal and unrelated to Telegraf write authorization.
