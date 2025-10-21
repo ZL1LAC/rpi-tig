@@ -20,11 +20,23 @@ sed_inplace() {
   fi
 }
 
+# Ensure the required env file exists before proceeding
+if [ ! -f env.influxdb ]; then
+  if [ -f env.influxdb.default ]; then
+    echo "env.influxdb not found; creating from template env.influxdb.default"
+    cp env.influxdb.default env.influxdb
+  else
+    echo "Error: env.influxdb not found and no env.influxdb.default template present." >&2
+    echo "Please create env.influxdb before running this script." >&2
+    exit 1
+  fi
+fi
+
 # Step one: ensure we have Token that is defined everywhere it is needed:
 # - InfluxDB of course
 # - Telegraf so that it can write to Influx
 # - Grafana so that it can read from Influx
-if [ $(grep -c "TOKEN_TO_CHANGE" env.influxdb) -ne 0 ]; then
+if grep -q "TOKEN_TO_CHANGE" env.influxdb; then
    echo "Default token detected for Influx database..."
    echo "Setting up a random token for this installation"
    if ! command -v openssl
@@ -40,7 +52,7 @@ if [ $(grep -c "TOKEN_TO_CHANGE" env.influxdb) -ne 0 ]; then
 fi
 
 # Step two: also define an admin password for InfluxDB
-if [ $(grep -c "ADMIN_TO_CHANGE" env.influxdb) -ne 0 ]; then
+if grep -q "ADMIN_TO_CHANGE" env.influxdb; then
    echo "Default password detected for InfluxDB administrator..."
    echo "Setting up a random password for this installation"
    if ! command -v openssl
